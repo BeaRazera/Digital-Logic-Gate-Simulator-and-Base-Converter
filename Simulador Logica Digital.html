@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Lógica Digital</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --primary-color: #3b82f6;
+      --border-color: #334155;
+      --accent-green: #22c55e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 750px;
+      padding: 2rem 1rem;
+    }
+
+    .app-header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .app-header h1 {
+      font-size: 1.8rem;
+      color: var(--text-color);
+    }
+
+    .subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+    }
+
+    .simulator-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 2rem;
+    }
+
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .mode-toggle input {
+      cursor: pointer;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    button, select {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+
+    button:hover:not(:disabled), select:hover {
+      border-color: var(--primary-color);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border-color);
+    }
+
+    .output-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .led-display {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-color);
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    .led {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .led-off {
+      background-color: #334155;
+      box-shadow: none;
+    }
+
+    .led-on {
+      background-color: var(--accent-green);
+      box-shadow: 0 0 12px var(--accent-green);
+    }
+
+    .conversion-panel {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .conversion-panel div {
+      margin-bottom: 0.4rem;
+    }
+
+    .conversion-panel div:last-child {
+      margin-bottom: 0;
+    }
+
+    .truth-table-container {
+      margin-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1.5rem;
+    }
+
+    .truth-table-container h3 {
+      font-size: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 1rem;
+      color: #94a3b8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--bg-color);
+      color: var(--primary-color);
+    }
+
+    .hidden-col {
+      display: none;
+    }
+
+    tr.active-row {
+      background-color: rgba(59, 130, 246, 0.2);
+      font-weight: bold;
+    }
+
+    tr.active-row td {
+      border-color: var(--primary-color);
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="main-container">
+    <header class="app-header">
+      <h1>Simulador de Lógica Digital</h1>
+      <p class="subtitle">Análise de Portas Lógicas e Conversão Numérica de 8 Bits</p>
+    </header>
+
+    <section class="simulator-card">
+      <div class="mode-toggle">
+        <input type="checkbox" id="enableC" onchange="alternarModoEntradaC()">
+        <label for="enableC">Habilitar Terceira Entrada (Entrada C)</label>
+      </div>
+
+      <div class="controls-grid">
+        <button id="switchA" onclick="alternarEntrada('A')">Entrada A: 0</button>
+        <button id="switchB" onclick="alternarEntrada('B')">Entrada B: 0</button>
+        <button id="switchC" onclick="alternarEntrada('C')" disabled>Entrada C: Off</button>
+        
+        <select id="gateSelect" onchange="atualizarSimulador()">
+          <option value="AND">Porta: AND (E)</option>
+          <option value="OR">Porta: OR (OU)</option>
+          <option value="XOR">Porta: XOR (OU Exclusivo)</option>
+          <option value="NOT">Porta: NOT (NÃO A)</option>
+          <option value="NAND">Porta: NAND (NÃO E)</option>
+          <option value="NOR">Porta: NOR (NÃO OU)</option>
+          <option value="XNOR">Porta: XNOR (NÃO OU Exclusivo)</option>
+        </select>
+      </div>
+
+      <div class="output-section">
+        <div class="led-display">
+          <div id="ledIndicator" class="led led-off"></div>
+          <span id="ledStatus">Status de Saída: INATIVO (0)</span>
+        </div>
+
+        <div class="conversion-panel">
+          <div id="numDec">Decimal: 0</div>
+          <div id="numBin">Binário: 00000000</div>
+          <div id="numHex">Hexadecimal: 0x00</div>
+        </div>
+      </div>
+
+      <div class="truth-table-container">
+        <h3>Tabela Verdade</h3>
+        <table id="truthTable">
+          <thead>
+            <tr>
+              <th>Entrada A</th>
+              <th>Entrada B</th>
+              <th id="colHeaderC" class="hidden-col">Entrada C</th>
+              <th>Saída (Y)</th>
+            </tr>
+          </thead>
+          <tbody id="truthTableBody">
+            <!-- Linhas geradas dinamicamente via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let entradaA = 0;
+    let entradaB = 0;
+    let entradaC = 0;
+    let usarEntradaC = false;
+
+    function alternarModoEntradaC() {
+      usarEntradaC = document.getElementById('enableC').checked;
+      const btnC = document.getElementById('switchC');
+      const headerC = document.getElementById('colHeaderC');
+
+      if (usarEntradaC) {
+        btnC.disabled = false;
+        btnC.textContent = `Entrada C: ${entradaC}`;
+        headerC.classList.remove('hidden-col');
+      } else {
+        btnC.disabled = true;
+        btnC.textContent = 'Entrada C: Off';
+        headerC.classList.add('hidden-col');
+      }
+
+      atualizarSimulador();
+    }
+
+    function alternarEntrada(porta) {
+      if (porta === 'A') {
+        entradaA = entradaA === 0 ? 1 : 0;
+        document.getElementById('switchA').textContent = `Entrada A: ${entradaA}`;
+      } else if (porta === 'B') {
+        entradaB = entradaB === 0 ? 1 : 0;
+        document.getElementById('switchB').textContent = `Entrada B: ${entradaB}`;
+      } else if (porta === 'C' && usarEntradaC) {
+        entradaC = entradaC === 0 ? 1 : 0;
+        document.getElementById('switchC').textContent = `Entrada C: ${entradaC}`;
+      }
+      atualizarSimulador();
+    }
+
+    function calcularSaidaPorta(porta, a, b, c) {
+      if (!usarEntradaC) {
+        switch (porta) {
+          case 'AND':  return a & b;
+          case 'OR':   return a | b;
+          case 'XOR':  return a ^ b;
+          case 'NOT':  return a === 0 ? 1 : 0;
+          case 'NAND': return (a & b) === 0 ? 1 : 0;
+          case 'NOR':  return (a | b) === 0 ? 1 : 0;
+          case 'XNOR': return (a ^ b) === 0 ? 1 : 0;
+          default:     return 0;
+        }
+      } else {
+        switch (porta) {
+          case 'AND':  return a & b & c;
+          case 'OR':   return a | b | c;
+          case 'XOR':  return a ^ b ^ c;
+          case 'NOT':  return a === 0 ? 1 : 0;
+          case 'NAND': return (a & b & c) === 0 ? 1 : 0;
+          case 'NOR':  return (a | b | c) === 0 ? 1 : 0;
+          case 'XNOR': return (a ^ b ^ c) === 0 ? 1 : 0;
+          default:     return 0;
+        }
+      }
+    }
+
+    function atualizarTabelaVerdade(portaSelecionada) {
+      const tbody = document.getElementById('truthTableBody');
+      tbody.innerHTML = '';
+
+      let combinacoes = [];
+
+      if (portaSelecionada === 'NOT') {
+        combinacoes = usarEntradaC ? [[0, '-', '-'], [1, '-', '-']] : [[0, '-'], [1, '-']];
+      } else if (!usarEntradaC) {
+        combinacoes = [[0, 0], [0, 1], [1, 0], [1, 1]];
+      } else {
+        for (let a = 0; a <= 1; a++) {
+          for (let b = 0; b <= 1; b++) {
+            for (let c = 0; c <= 1; c++) {
+              combinacoes.push([a, b, c]);
+            }
+          }
+        }
+      }
+
+      combinacoes.forEach((combo) => {
+        const tr = document.createElement('tr');
+        const a = combo[0];
+        const b = combo[1];
+        const c = usarEntradaC ? combo[2] : null;
+
+        const valB = typeof b === 'number' ? b : 0;
+        const valC = typeof c === 'number' ? c : 0;
+
+        const resultado = calcularSaidaPorta(portaSelecionada, a, valB, valC);
+
+        let ehLinhaAtiva = false;
+        if (portaSelecionada === 'NOT') {
+          ehLinhaAtiva = a === entradaA;
+        } else if (!usarEntradaC) {
+          ehLinhaAtiva = a === entradaA && b === entradaB;
+        } else {
+          ehLinhaAtiva = a === entradaA && b === entradaB && c === entradaC;
+        }
+
+        if (ehLinhaAtiva) {
+          tr.className = 'active-row';
+        }
+
+        if (usarEntradaC) {
+          tr.innerHTML = `<td>${a}</td><td>${b}</td><td>${c}</td><td>${resultado}</td>`;
+        } else {
+          tr.innerHTML = `<td>${a}</td><td>${b}</td><td>${resultado}</td>`;
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function atualizarSimulador() {
+      const portaSelecionada = document.getElementById('gateSelect').value;
+      const resultado = calcularSaidaPorta(portaSelecionada, entradaA, entradaB, entradaC);
+
+      const led = document.getElementById('ledIndicator');
+      const statusText = document.getElementById('ledStatus');
+
+      if (resultado === 1) {
+        led.className = 'led led-on';
+        statusText.textContent = 'Status de Saída: ATIVO (1)';
+      } else {
+        led.className = 'led led-off';
+        statusText.textContent = 'Status de Saída: INATIVO (0)';
+      }
+
+      const binario = resultado.toString(2).padStart(8, '0');
+      const hex = resultado.toString(16).toUpperCase().padStart(2, '0');
+
+      document.getElementById('numDec').textContent = `Decimal: ${resultado}`;
+      document.getElementById('numBin').textContent = `Binário: ${binario}`;
+      document.getElementById('numHex').textContent = `Hexadecimal: 0x${hex}`;
+
+      atualizarTabelaVerdade(portaSelecionada);
+    }
+
+    window.onload = atualizarSimulador;
+  </script>
+</body>
+</html>
