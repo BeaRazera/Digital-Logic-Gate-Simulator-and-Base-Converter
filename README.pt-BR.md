@@ -1,6 +1,5 @@
 ### `README.pt-BR.md` (Português)
 
-```markdown
 **Português** | [ English ](README.md)
 
 # Simulador de Lógica Digital e Conversor Numérico de 8 Bits
